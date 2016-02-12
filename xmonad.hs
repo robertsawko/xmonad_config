@@ -87,7 +87,7 @@ manageHook' = (composeAll . concat $
 myLogHook :: Handle -> X ()
 --myLogHook = fadeInactiveLogHook fadeAmount where fadeAmount = 0.8  
 --This is mainy dzen config. Please note that I use special icons for layouts.
-myLogHook h = dynamicLogWithPP $ defaultPP 
+myLogHook h = dynamicLogWithPP $ def 
     {
         ppCurrent           =   dzenColor "#ebac54" "#1B1D1E" . pad
       , ppVisible           =   dzenColor "white" "#1B1D1E" . pad
@@ -114,7 +114,7 @@ myBitmapsDir = "/home/robert/.xmonad/icons"
 main = do
     dzenLeftBar <- spawnPipe myXmonadBar
     dzenRightBar <- spawnPipe myStatusBar
-    xmonad $ defaultConfig
+    xmonad $ def
         {borderWidth = 1
         , terminal = "urxvt"
         , workspaces = myWorkspaces 
@@ -132,7 +132,7 @@ main = do
         , ((0, xK_Print), spawn "scrot")
         , ((mod4Mask, xK_p), spawn "dmenu_run -fn -*-terminus-medium-r-*-*-24-*-*-*-*-*-*-* -nb black -nf grey -sb midnightblue -sf white")
         --, ((mod4Mask, xK_p), spawn "dmenu_run -fn xfs:inconsolata -nb black -nf grey -sb midnightblue -sf white")
-        , ((mod4Mask, xK_Tab), goToSelected defaultGSConfig)
+        , ((mod4Mask, xK_Tab), goToSelected def)
 --XF86AudioNext
         , ((0, 0x1008ff17), spawn "cmus-remote --next")
 --XF86AudioPrev
