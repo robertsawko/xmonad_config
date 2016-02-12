@@ -1,6 +1,5 @@
 import XMonad
 import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.ICCCMFocus
 import XMonad.Hooks.SetWMName
 
 import XMonad.Hooks.ManageDocks
@@ -21,7 +20,7 @@ import XMonad.Hooks.ManageHelpers
 
 import XMonad.Actions.GridSelect
 import Data.Ratio ((%))
- 
+
 import qualified XMonad.StackSet as W
 import qualified Data.Map as M
 
@@ -62,24 +61,24 @@ manageHook' = (composeAll . concat $
     [ [resource     =? r            --> doIgnore            |   r   <- myIgnores] -- ignore desktop
     , [className    =? c            --> doShift  "web"    |   c   <- myWebs   ] -- move webs to main
     , [className    =? c            --> doShift  "mail"    |   c   <- myMail    ] -- move webs to main
-    --, [className    =? c            --> doShift	 "im"   |   c   <- myChat   ] -- move chat to chat
+    --, [className    =? c            --> doShift        "im"   |   c   <- myChat   ] -- move chat to chat
     , [className    =? c            --> doShift  "mus"  |   c   <- myMusic  ] -- move music to music
     , [className    =? c            --> doCenterFloat       |   c   <- myFloats ]
-    ]) 
+    ])
 
     where
- 
+
         role      = stringProperty "WM_WINDOW_ROLE"
         name      = stringProperty "WM_NAME"
- 
+
         -- classnames
         -- Plugin-container is used to avoid tiling Full-screend YouTube videos.
         myFloats  = ["MPlayer","Plugin-container","Vlc","vlc"]
         myWebs    = ["Firefox"]
-        myChat	  = ["Skype"]
-        myMail	  = ["Thunderbird"]
-        myMusic	  = ["Easytag"]
- 
+        myChat    = ["Skype"]
+        myMail    = ["Thunderbird"]
+        myMusic   = ["Easytag"]
+
         -- resources
         myIgnores = ["trayer"]
  
@@ -107,27 +106,27 @@ myLogHook h = dynamicLogWithPP $ defaultPP
                                 )
       , ppTitle             =   (" " ++) . dzenColor "white" "#1B1D1E" . dzenEscape
       , ppOutput            =   hPutStrLn h
-    } 
+    }
 
-myXmonadBar = "dzen2 -x '0' -y '0' -h '25' -w '1340' -ta 'l' -fg '#FFFFFF' -bg '#1B1D1E'"
-myStatusBar = "conky -c /home/robert/.xmonad/conky.conf | dzen2 -x '1340' -y '0' -w '580' -h '25' -ta 'r' -bg '#1B1D1E' -fg '#FFFFFF'"
+myXmonadBar = "dzen2 -x '0' -y '0' -h '25' -w '1300' -ta 'l' -fg '#FFFFFF' -bg '#1B1D1E'"
+myStatusBar = "conky -c /home/robert/.xmonad/conky.conf | dzen2 -x '1300' -y '0' -w '620' -h '25' -ta 'right' -bg '#1B1D1E' -fg '#FFFFFF'"
 myBitmapsDir = "/home/robert/.xmonad/icons"
 main = do
     dzenLeftBar <- spawnPipe myXmonadBar
     dzenRightBar <- spawnPipe myStatusBar
     xmonad $ defaultConfig
         {borderWidth = 1
-	, terminal = "urxvt"
-	, workspaces = myWorkspaces 
-	--, keys = keys'
-	--remaps the mod key to Meta key
+        , terminal = "urxvt"
+        , workspaces = myWorkspaces 
+        --, keys = keys'
+        --remaps the mod key to Meta key
         , modMask = mod4Mask
         , startupHook = setWMName "LG3D"
-	, focusFollowsMouse = False
+        , focusFollowsMouse = False
         , layoutHook = layoutHook'
         , manageHook = manageDocks <+> manageHook'
         , logHook = myLogHook dzenLeftBar >> fadeInactiveLogHook 0.8
-        } `additionalKeys` 
+        } `additionalKeys`
         [ ((mod4Mask .|. shiftMask, xK_z), spawn "xscreensaver-command -lock")
         , ((controlMask, xK_Print), spawn "sleep 0.2; scrot -s")
         , ((0, xK_Print), spawn "scrot")
