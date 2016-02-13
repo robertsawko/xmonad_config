@@ -10,8 +10,8 @@ import XMonad.Hooks.FadeInactive
 import XMonad.Layout.NoBorders
 import XMonad.Layout.PerWorkspace (onWorkspace, onWorkspaces)
 import XMonad.Layout.Reflect (reflectHoriz)
-import XMonad.Layout.IM
 import XMonad.Layout.Grid
+import XMonad.Layout.Gaps
 import Data.Ratio ((%))
 import XMonad.Layout.SimpleFloat
 import XMonad.Layout.Spacing
@@ -24,10 +24,10 @@ import Data.Ratio ((%))
 import qualified XMonad.StackSet as W
 import qualified Data.Map as M
 
--- Define workspaces 
+-- Define workspaces
 myWorkspaces = ["w1","w2","w3","web","mail","mus"]
 -- Define layouts
-layoutHook'  =  onWorkspaces ["w1","w2","w3"] stdLayout $ 
+layoutHook'  =  onWorkspaces ["w1","w2","w3"] stdLayout $
                 onWorkspaces ["web","mail","mus"] webLayout $ customLayout2
                 --onWorkspaces ["im"] chatLayout $ customLayout2
 
@@ -42,15 +42,15 @@ layoutHook'  =  onWorkspaces ["w1","w2","w3"] stdLayout $
 
 --smartBorders removes the border from full screen apps.
 --avoidStruts doesn't cover other layout elements such as status bar.
-webLayout = smartBorders $ avoidStruts $ Mirror tiled ||| tiled ||| Full 
+webLayout = smartBorders $ avoidStruts $ Mirror tiled ||| tiled ||| Full
   where
     tiled = ResizableTall 1 (3/100) (3/4)[]
 
-stdLayout = avoidStruts $  tiled ||| Mirror tiled ||| Full 
+stdLayout = gaps[(U, 25)] $  tiled ||| Mirror tiled ||| Full
   where
     tiled   = ResizableTall 1 (2/100) (1/2) []
 
-customLayout2 = avoidStruts $ Full ||| tiled ||| Mirror tiled 
+customLayout2 = avoidStruts $ Full ||| tiled ||| Mirror tiled
   where
     tiled   = ResizableTall 1 (2/100) (1/2) []
 
@@ -81,7 +81,7 @@ manageHook' = (composeAll . concat $
 
         -- resources
         myIgnores = ["trayer"]
- 
+
 -- Define logHook
 --myLogHook :: X ()
 myLogHook :: Handle -> X ()
@@ -125,6 +125,7 @@ main = do
         , focusFollowsMouse = False
         , layoutHook = layoutHook'
         , manageHook = manageDocks <+> manageHook'
+        , handleEventHook = docksEventHook <+> handleEventHook def
         , logHook = myLogHook dzenLeftBar >> fadeInactiveLogHook 0.8
         } `additionalKeys`
         [ ((mod4Mask .|. shiftMask, xK_z), spawn "xscreensaver-command -lock")
