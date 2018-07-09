@@ -17,6 +17,7 @@ import XMonad.Layout.SimpleFloat
 import XMonad.Layout.Spacing
 import XMonad.Layout.ResizableTile
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.EwmhDesktops
 
 import XMonad.Actions.GridSelect
 import Data.Ratio ((%))
@@ -42,7 +43,7 @@ layoutHook'  =  onWorkspaces ["w1","w2","w3"] stdLayout $
 
 --smartBorders removes the border from full screen apps.
 --avoidStruts doesn't cover other layout elements such as status bar.
-webLayout = smartBorders $ avoidStruts $ Mirror tiled ||| tiled ||| Full
+webLayout = gaps[(U, 25)] $ smartBorders $ Mirror tiled ||| tiled ||| Full
   where
     tiled = ResizableTall 1 (3/100) (3/4)[]
 
@@ -58,12 +59,11 @@ customLayout2 = avoidStruts $ Full ||| tiled ||| Mirror tiled
 --manageHood configures the behaviour of WM with respect to applications
 manageHook' :: ManageHook
 manageHook' = (composeAll . concat $
-    [ [resource     =? r            --> doIgnore            |   r   <- myIgnores] -- ignore desktop
-    , [className    =? c            --> doShift  "web"    |   c   <- myWebs   ] -- move webs to main
-    , [className    =? c            --> doShift  "mail"    |   c   <- myMail    ] -- move webs to main
-    --, [className    =? c            --> doShift        "im"   |   c   <- myChat   ] -- move chat to chat
-    , [className    =? c            --> doShift  "mus"  |   c   <- myMusic  ] -- move music to music
-    , [className    =? c            --> doCenterFloat       |   c   <- myFloats ]
+    [ [resource     =? r --> doIgnore          | r <- myIgnores] -- ignore desktop
+    , [className    =? c --> doShift  "web"    | c <- myWebs   ] -- move webs to main
+    , [className    =? c --> doShift  "mail"   | c <- myMail   ] -- move webs to main
+    , [className    =? c --> doShift  "mus"    | c <- myMusic  ] -- move music to music
+    , [className    =? c --> doCenterFloat     | c <- myFloats ]
     ])
 
     where
@@ -74,7 +74,7 @@ manageHook' = (composeAll . concat $
         -- classnames
         -- Plugin-container is used to avoid tiling Full-screend YouTube videos.
         myFloats  = ["MPlayer","Plugin-container","Vlc","vlc"]
-        myWebs    = ["Firefox"]
+        myWebs    = ["Firefox", "qutebrowser"]
         myChat    = ["Skype"]
         myMail    = ["Thunderbird"]
         myMusic   = ["Easytag"]
@@ -83,7 +83,6 @@ manageHook' = (composeAll . concat $
         myIgnores = ["trayer"]
 
 -- Define logHook
---myLogHook :: X ()
 myLogHook :: Handle -> X ()
 --myLogHook = fadeInactiveLogHook fadeAmount where fadeAmount = 0.8  
 --This is mainy dzen config. Please note that I use special icons for layouts.
@@ -108,14 +107,15 @@ myLogHook h = dynamicLogWithPP $ def
       , ppOutput            =   hPutStrLn h
     }
 
-myXmonadBar = "dzen2 -x '0' -y '0' -h '25' -w '1300' -ta 'l' -fg '#FFFFFF' -bg '#1B1D1E'"
-myStatusBar = "conky -c /home/robert/.xmonad/conky.conf | dzen2 -x '1300' -y '0' -w '620' -h '25' -ta 'right' -bg '#1B1D1E' -fg '#FFFFFF'"
+myXmonadBar = "dzen2 -x '0' -y '0' -h '25' -w '1100' -ta 'l' -fg '#FFFFFF' -bg '#1B1D1E'"
+myStatusBar = "conky -c /home/robert/.xmonad/conky.conf | dzen2 -x '1100' -y '0' -w '820' -h '25' -ta 'right' -bg '#1B1D1E' -fg '#FFFFFF'"
 myBitmapsDir = "/home/robert/.xmonad/icons"
 main = do
     dzenLeftBar <- spawnPipe myXmonadBar
     dzenRightBar <- spawnPipe myStatusBar
-    xmonad $ def
-        {borderWidth = 1
+    xmonad $ ewmh def
+        {
+        borderWidth = 1
         , terminal = "urxvt"
         , workspaces = myWorkspaces 
         --, keys = keys'
@@ -131,7 +131,10 @@ main = do
         [ ((mod4Mask .|. shiftMask, xK_z), spawn "xscreensaver-command -lock")
         , ((controlMask, xK_Print), spawn "sleep 0.2; scrot -s")
         , ((0, xK_Print), spawn "scrot")
-        , ((mod4Mask, xK_p), spawn "dmenu_run -fn -*-terminus-medium-r-*-*-24-*-*-*-*-*-*-* -nb black -nf grey -sb midnightblue -sf white")
+--Rofi shortcuts modes: run, window switcher, ssh
+        , ((mod4Mask, xK_p), spawn "rofi -show run")
+        , ((mod4Mask, xK_o), spawn "rofi -show window")
+        , ((mod4Mask, xK_s), spawn "rofi -show ssh")
         --, ((mod4Mask, xK_p), spawn "dmenu_run -fn xfs:inconsolata -nb black -nf grey -sb midnightblue -sf white")
         , ((mod4Mask, xK_Tab), goToSelected def)
 --XF86AudioNext
