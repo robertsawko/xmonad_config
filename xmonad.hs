@@ -2,6 +2,10 @@ import XMonad
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.SetWMName
 
+import qualified XMonad.StackSet as W
+import XMonad.Actions.PhysicalScreens
+import Data.Default
+
 import XMonad.Hooks.ManageDocks
 import XMonad.Util.Run(spawnPipe)
 import XMonad.Util.EZConfig(additionalKeys)
@@ -17,12 +21,11 @@ import XMonad.Layout.SimpleFloat
 import XMonad.Layout.Spacing
 import XMonad.Layout.ResizableTile
 import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.EwmhDesktops
 
 import XMonad.Actions.GridSelect
 import Data.Ratio ((%))
-
-import qualified XMonad.StackSet as W
-import qualified Data.Map as M
+import XMonad.Util.NamedWindows (getName)
 
 -- Define workspaces
 myWorkspaces = ["w1","w2","w3","web","mail","mus"]
@@ -42,11 +45,11 @@ layoutHook'  =  onWorkspaces ["w1","w2","w3"] stdLayout $
 
 --smartBorders removes the border from full screen apps.
 --avoidStruts doesn't cover other layout elements such as status bar.
-webLayout = smartBorders $ avoidStruts $ Mirror tiled ||| tiled ||| Full
+webLayout = gaps[(U, 30)] $ smartBorders $ Mirror tiled ||| tiled ||| Full
   where
     tiled = ResizableTall 1 (3/100) (3/4)[]
 
-stdLayout = gaps[(U, 25)] $  tiled ||| Mirror tiled ||| Full
+stdLayout = gaps[(U, 30)] $  tiled ||| Mirror tiled ||| Full
   where
     tiled   = ResizableTall 1 (2/100) (1/2) []
 
@@ -55,15 +58,14 @@ customLayout2 = avoidStruts $ Full ||| tiled ||| Mirror tiled
     tiled   = ResizableTall 1 (2/100) (1/2) []
 
 --define manageHook
---manageHood configures the behaviour of WM with respect to applications
+--manageHook configures the behaviour of WM with respect to applications
 manageHook' :: ManageHook
 manageHook' = (composeAll . concat $
-    [ [resource     =? r            --> doIgnore            |   r   <- myIgnores] -- ignore desktop
-    , [className    =? c            --> doShift  "web"    |   c   <- myWebs   ] -- move webs to main
-    , [className    =? c            --> doShift  "mail"    |   c   <- myMail    ] -- move webs to main
-    --, [className    =? c            --> doShift        "im"   |   c   <- myChat   ] -- move chat to chat
-    , [className    =? c            --> doShift  "mus"  |   c   <- myMusic  ] -- move music to music
-    , [className    =? c            --> doCenterFloat       |   c   <- myFloats ]
+    [ [resource     =? r --> doIgnore          | r <- myIgnores] -- ignore desktop
+    , [className    =? c --> doShift  "web"    | c <- myWebs   ] -- move webs to main
+    , [className    =? c --> doShift  "mail"   | c <- myMail   ] -- move webs to main
+    , [className    =? c --> doShift  "mus"    | c <- myMusic  ] -- move music to music
+    , [className    =? c --> doCenterFloat     | c <- myFloats ]
     ])
 
     where
@@ -74,7 +76,7 @@ manageHook' = (composeAll . concat $
         -- classnames
         -- Plugin-container is used to avoid tiling Full-screend YouTube videos.
         myFloats  = ["MPlayer","Plugin-container","Vlc","vlc"]
-        myWebs    = ["Firefox"]
+        myWebs    = ["Firefox", "qutebrowser"]
         myChat    = ["Skype"]
         myMail    = ["Thunderbird"]
         myMusic   = ["Easytag"]
@@ -83,14 +85,14 @@ manageHook' = (composeAll . concat $
         myIgnores = ["trayer"]
 
 -- Define logHook
---myLogHook :: X ()
 myLogHook :: Handle -> X ()
+
 --myLogHook = fadeInactiveLogHook fadeAmount where fadeAmount = 0.8  
 --This is mainy dzen config. Please note that I use special icons for layouts.
 myLogHook h = dynamicLogWithPP $ def 
     {
-        ppCurrent           =   dzenColor "#ebac54" "#1B1D1E" . pad
-      , ppVisible           =   dzenColor "white" "#1B1D1E" . pad
+        ppCurrent           =   dzenColor "#ebac54" "#1B1D1E" . wrap "[" "]"
+      , ppVisible           =   dzenColor "#ebac54" "#1B1D1E" . pad
       , ppHidden            =   dzenColor "white" "#1B1D1E" . pad
       , ppHiddenNoWindows   =   dzenColor "#7b7b7b" "#1B1D1E" . pad
       , ppUrgent            =   dzenColor "#ff0000" "#1B1D1E" . pad
@@ -108,14 +110,15 @@ myLogHook h = dynamicLogWithPP $ def
       , ppOutput            =   hPutStrLn h
     }
 
-myXmonadBar = "dzen2 -x '0' -y '0' -h '25' -w '1300' -ta 'l' -fg '#FFFFFF' -bg '#1B1D1E'"
-myStatusBar = "conky -c /home/robert/.xmonad/conky.conf | dzen2 -x '1300' -y '0' -w '620' -h '25' -ta 'right' -bg '#1B1D1E' -fg '#FFFFFF'"
-myBitmapsDir = "/home/robert/.xmonad/icons"
+myXmonadBar = "dzen2 -x '0' -y '0' -h '30' -w '1200' -ta 'l' -fg '#FFFFFF' -bg '#1B1D1E'"
+myStatusBar = "conky -c /home/rsa/.xmonad/conky.conf | dzen2 -x '1200' -y '0' -w '720' -h '30' -ta 'right' -bg '#1B1D1E' -fg '#FFFFFF'"
+myBitmapsDir = "/home/rsa/.xmonad/icons"
 main = do
     dzenLeftBar <- spawnPipe myXmonadBar
     dzenRightBar <- spawnPipe myStatusBar
-    xmonad $ def
-        {borderWidth = 1
+    xmonad $ ewmh def
+        {
+        borderWidth = 3
         , terminal = "urxvt"
         , workspaces = myWorkspaces 
         --, keys = keys'
@@ -125,13 +128,17 @@ main = do
         , focusFollowsMouse = False
         , layoutHook = layoutHook'
         , manageHook = manageDocks <+> manageHook'
-        , handleEventHook = docksEventHook <+> handleEventHook def
-        , logHook = myLogHook dzenLeftBar >> fadeInactiveLogHook 0.8
+        , handleEventHook = docksEventHook <+> fullscreenEventHook <+> handleEventHook def
+        , logHook = myLogHook dzenLeftBar >> fadeInactiveCurrentWSLogHook 0.8
         } `additionalKeys`
         [ ((mod4Mask .|. shiftMask, xK_z), spawn "xscreensaver-command -lock")
         , ((controlMask, xK_Print), spawn "sleep 0.2; scrot -s")
         , ((0, xK_Print), spawn "scrot")
-        , ((mod4Mask, xK_p), spawn "dmenu_run -fn -*-terminus-medium-r-*-*-24-*-*-*-*-*-*-* -nb black -nf grey -sb midnightblue -sf white")
+        , ((mod4Mask, xK_f), withFocused $ windows . (flip W.float $ W.RationalRect 0 0 1 1))
+-- Rofi magic
+        , ((mod4Mask, xK_p), spawn "rofi -show run")
+        , ((mod4Mask, xK_s), spawn "rofi -show ssh")
+        , ((mod4Mask, xK_o), spawn "rofi -show window")
         --, ((mod4Mask, xK_p), spawn "dmenu_run -fn xfs:inconsolata -nb black -nf grey -sb midnightblue -sf white")
         , ((mod4Mask, xK_Tab), goToSelected def)
 --XF86AudioNext
@@ -147,15 +154,25 @@ main = do
 --AlternativePlay
         , ((mod4Mask, xK_c), spawn "cmus-remote --pause")
 --XF86AudioRaiseVolume
-        , ((0, 0x1008ff13), spawn "amixer set Master playback 2%+")
+        --, ((0, 0x1008ff13), spawn "amixer set Master playback 2%+")
+        , ((0, 0x1008ff13), spawn "pactl set-sink-volume 0 +3%")
 --XF86AudioLowerVolume
-        , ((0, 0x1008ff11), spawn "amixer set Master playback 2%-")
+        --, ((0, 0x1008ff11), spawn "amixer set Master playback 2%-")
+        , ((0, 0x1008ff11), spawn "pactl set-sink-volume 0 -3%")
 --XF86AudioLowerVolume
-        , ((mod4Mask, 0x2d), spawn "amixer set Master playback 2%-")
+        --, ((mod4Mask, 0x2d), spawn "amixer set Master playback 2%-")
+        , ((mod4Mask, 0x2d), spawn "pactl set-sink-volume 0 -3%")
 --XF86AudioRaiseVolume
-        , ((mod4Mask, 0x3d), spawn "amixer set Master playback 2%+")
+        --, ((mod4Mask, 0x3d), spawn "amixer set Master playback 2%+")
+        , ((mod4Mask, 0x3d), spawn "pactl set-sink-volume 0 +3%")
 --ranger shortcut
         , ((mod4Mask, xK_r), spawn "urxvt -e zsh -ic ranger")
 --mutt shortcut
         , ((mod4Mask, xK_m), spawn "urxvt -e zsh -ic mutt")
+--warriors environment
+        , ((mod4Mask .|. shiftMask, xK_t), spawn "urxvt -e bash -rcfile .warriorsrc")
+        , ((mod4Mask, xK_w), onPrevNeighbour def W.view)
+        , ((mod4Mask, xK_e), onNextNeighbour def W.view)
+        , ((mod4Mask .|. shiftMask, xK_w), onPrevNeighbour def W.shift)
+        , ((mod4Mask .|. shiftMask, xK_e), onNextNeighbour def W.shift)
         ]
